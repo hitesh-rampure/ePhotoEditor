@@ -10,7 +10,7 @@ import com.e.com.videoandimageuploaddemo.MultipleSelectAdapter.PictureViewHolder
 public interface MultiSelectorListener
     {
 
-        void onClick(ViewHolder view, boolean isSolved, int position, boolean isChecked);
+        void onClick(ViewHolder view, boolean isSolved, int position, boolean isChecked, boolean isCheckBoxEnabled);
 
         void onLongPress(SelectableHolder viewHolder, boolean isSelected);
 

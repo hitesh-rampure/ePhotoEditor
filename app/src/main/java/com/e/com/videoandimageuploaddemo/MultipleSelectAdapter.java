@@ -9,6 +9,7 @@ import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ImageView.ScaleType;
 
 import com.bignerdranch.android.multiselector.MultiSelector;
 import com.bignerdranch.android.multiselector.SwappingHolder;
@@ -23,6 +24,7 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
         private Context _context;
         private LinkedList<SelectedData> _selectedData;
         private MultiSelectorListener _multiSelectorListener;
+        int _position = -1;
 
 
         MultipleSelectAdapter(Context context, MultiSelector multiSelector, LinkedList<SelectedData> selectedDataArrayList, MultiSelectorListener multiSelectorListener)
@@ -48,6 +50,7 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
 
                         mSolvedCheckBox = itemView.findViewById(R.id.list_item_solvedCheckBox);
                         pictureImageView = itemView.findViewById(R.id.pictureImageView);
+                        pictureImageView.setScaleType(ScaleType.FIT_XY);
 
                         itemView.setLongClickable(true);
                         itemView.setOnLongClickListener(this);
@@ -63,7 +66,14 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
 
                         if (selectedData.isSolved)
                             {
-                                mSolvedCheckBox.setChecked(false);
+                                if (_position == position)
+                                    {
+                                        mSolvedCheckBox.setChecked(true);
+                                    }
+                                else
+                                    {
+                                        mSolvedCheckBox.setChecked(false);
+                                    }
                                 mSolvedCheckBox.setVisibility(View.VISIBLE);
                             }
                         else
@@ -77,18 +87,24 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
                                 @Override
                                 public void onClick(View v)
                                     {
-
-                                        if (mSolvedCheckBox.isChecked())
+                                        if (mSolvedCheckBox.getVisibility() == View.VISIBLE)
                                             {
-                                                mSolvedCheckBox.setChecked(false);
+                                                if (mSolvedCheckBox.isChecked())
+                                                    {
+                                                        mSolvedCheckBox.setChecked(false);
 
-                                                _multiSelectorListener.onClick(pictureViewHolder, false, position, mSolvedCheckBox.isChecked());
+                                                        _multiSelectorListener.onClick(pictureViewHolder, false, position, mSolvedCheckBox.isChecked(), true);
 
+                                                    }
+                                                else
+                                                    {
+                                                        mSolvedCheckBox.setChecked(true);
+                                                        _multiSelectorListener.onClick(pictureViewHolder, true, position, mSolvedCheckBox.isChecked(), true);
+                                                    }
                                             }
                                         else
                                             {
-                                                mSolvedCheckBox.setChecked(true);
-                                                _multiSelectorListener.onClick(pictureViewHolder, true, position, mSolvedCheckBox.isChecked());
+                                                _multiSelectorListener.onClick(pictureViewHolder, false, position, false, false);
                                             }
                                     }
                             });
@@ -97,6 +113,7 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
                 @Override
                 public boolean onLongClick(View v)
                     {
+
                         if (mSolvedCheckBox.getVisibility() == View.VISIBLE)
                             {
                                 for (SelectedData selectedData : _selectedData)
@@ -110,9 +127,9 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
                                     {
                                         selectedData.setSolved(true);
                                     }
+                                _position = getAdapterPosition();
                             }
                         notifyDataSetChanged();
-                        _multiSelectorListener.onLongPress(this, true);
                         return true;
                     }
             }
@@ -162,17 +179,24 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
                                 public void onClick(View v)
                                     {
 
-                                        if (mSolvedCheckBox.isChecked())
+                                        if (mSolvedCheckBox.getVisibility() == View.VISIBLE)
                                             {
-                                                mSolvedCheckBox.setChecked(false);
+                                                if (mSolvedCheckBox.isChecked())
+                                                    {
+                                                        mSolvedCheckBox.setChecked(false);
 
-                                                _multiSelectorListener.onClick(videoViewHolder, false, position, mSolvedCheckBox.isChecked());
+                                                        _multiSelectorListener.onClick(videoViewHolder, false, position, mSolvedCheckBox.isChecked(), true);
 
+                                                    }
+                                                else
+                                                    {
+                                                        mSolvedCheckBox.setChecked(true);
+                                                        _multiSelectorListener.onClick(videoViewHolder, true, position, mSolvedCheckBox.isChecked(), true);
+                                                    }
                                             }
                                         else
                                             {
-                                                mSolvedCheckBox.setChecked(true);
-                                                _multiSelectorListener.onClick(videoViewHolder, true, position, mSolvedCheckBox.isChecked());
+                                                _multiSelectorListener.onClick(videoViewHolder, false, position, false, false);
                                             }
                                     }
                             });

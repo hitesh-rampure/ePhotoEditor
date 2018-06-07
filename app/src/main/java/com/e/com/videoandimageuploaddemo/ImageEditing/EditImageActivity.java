@@ -2,6 +2,7 @@ package com.e.com.videoandimageuploaddemo.ImageEditing;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -21,7 +22,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.e.com.videoandimageuploaddemo.ImageEditFragment;
 import com.e.com.videoandimageuploaddemo.R;
+import com.e.com.videoandimageuploaddemo.TabFragment;
 import com.eemphasys.eservie.imageannotations.library.OnPhotoEditorListener;
 import com.eemphasys.eservie.imageannotations.library.PhotoEditor;
 import com.eemphasys.eservie.imageannotations.library.PhotoEditorView;
@@ -368,6 +371,15 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
         }
     }
 
+        @SuppressLint("MissingPermission")
+        private void saveImage()
+            {
+                if (requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                    {
+                        showLoading("Saving...");
+                        File file = new File(Environment.getExternalStorageDirectory()
+                                + File.separator + ""
+                                + System.currentTimeMillis() + ".jpg");
     @SuppressLint("MissingPermission")
     private void saveImage() {
         if (requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
@@ -375,6 +387,24 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
 
             File myDir = new File(Environment.getExternalStorageDirectory() + "/eet");
 
+                        try
+                            {
+                                file.createNewFile();
+                                mPhotoEditor.saveImage(file.getAbsolutePath(), new PhotoEditor.OnSaveListener()
+                                    {
+                                        @Override
+                                        public void onSuccess(@NonNull String imagePath)
+                                            {
+                                                hideLoading();
+                                                showSnackbar("Image Saved Successfully");
+                                                mPhotoEditorView.getSource().setImageURI(Uri.fromFile(new File(imagePath)));
+
+                                                Intent intent = new Intent();
+                                                intent.putExtra("url", imagePath);
+                                                intent.putExtra("id", getIntent().getExtras().getInt("id"));
+                                                setResult(Activity.RESULT_OK, intent);
+                                                finish();
+                                            }
             if (!myDir.exists()) {
                 myDir.mkdirs();
             }

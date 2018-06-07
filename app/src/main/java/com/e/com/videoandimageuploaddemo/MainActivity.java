@@ -1,5 +1,6 @@
 package com.e.com.videoandimageuploaddemo;
 
+import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -54,5 +55,4 @@ public class MainActivity extends AppCompatActivity
 
                 return super.onCreateOptionsMenu(menu);
             }
-
     }

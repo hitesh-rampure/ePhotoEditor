@@ -3,20 +3,13 @@ package com.e.com.videoandimageuploaddemo;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
-import android.app.Fragment;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.drm.DrmStore.Action;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatImageView;
-import android.view.GestureDetector;
-import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -42,6 +35,9 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
         private final int ANIMATION_TIME = 800;
         private String url;
         private ImageView editImageView;
+        public final int EDIT_IMAGE_REQUEST_CODE = 1111;
+        private SaveEditedImagesListener _saveEditedImagesListener;
+
 
         @Override
         public void onCreate(Bundle savedInstanceState)
@@ -211,7 +207,33 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
             {
                 Intent intent = new Intent(getActivity(), EditImageActivity.class);
                 intent.putExtra("uri", url);
-                startActivity(intent);
+                intent.putExtra("id", getArguments().getInt("id"));
+                startActivityForResult(intent, EDIT_IMAGE_REQUEST_CODE);
+
+            }
+
+        @Override
+        public void onActivityResult(int requestCode, int resultCode, Intent data)
+            {
+                super.onActivityResult(requestCode, resultCode, data);
+
+                if (resultCode == Activity.RESULT_OK)
+                    {
+                        if (requestCode == EDIT_IMAGE_REQUEST_CODE)
+                            {
+                                Intent intent = new Intent();
+                                intent.putExtra("url", data.getExtras().getString("url"));
+                                intent.putExtra("id", data.getExtras().getInt("id"));
+                                _saveEditedImagesListener.onSaveEditedImages(data.getExtras().getString("url"), data.getExtras().getInt("id"));
+                                dismiss();
+                            }
+
+                    }
+            }
+
+        public void setOnSaveEditedImageListener(SaveEditedImagesListener saveEditedImagesListener)
+            {
+                _saveEditedImagesListener = saveEditedImagesListener;
             }
 
     }
