@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+     <item
+         android:id="@+id/action_camera_image"
+         android:orderInCategory="100"
+         android:title="Take a Pick"
+         app:showAsAction="never" />
+
+         <item
+             android:id="@+id/action_camera_video"
+             android:orderInCategory="100"
+             android:title="Take a Video"
+             app:showAsAction="never" />
+
+
+     <item
+         android:id="@+id/action_select"
+         android:orderInCategory="100"
+         android:title="Choose From Gallary"
+         app:showAsAction="never" />
+
+      <item
+          android:id="@+id/action_upload"
+          android:orderInCategory="100"
+          android:title="Upload"
+          app:showAsAction="never" />
+
+
+    <item
+        android:id="@+id/menu_search"
+        android:title="Search"
+        app:actionViewClass="android.support.v7.widget.SearchView"
+        app:showAsAction="always" />
+</menu>
