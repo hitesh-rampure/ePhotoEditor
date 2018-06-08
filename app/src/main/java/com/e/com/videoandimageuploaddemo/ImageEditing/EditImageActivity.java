@@ -554,7 +554,7 @@ public class EditImageActivity extends BaseActivity implements OnPhotoEditorList
                 finish();
             }
         });
-        builder.create().show();
 
+        builder.create().show();
     }
 }
