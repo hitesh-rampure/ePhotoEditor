@@ -16,10 +16,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="4dp"
-            android:textColor="#000000"
+            android:textColor="#FF0000"
             android:textSize="18sp"
+            android:textStyle="bold"
             tools:text="eET"
-            tools:textColor="@android:color/black" />
+            tools:textColor="#FF0000" />
 
     </FrameLayout>
 

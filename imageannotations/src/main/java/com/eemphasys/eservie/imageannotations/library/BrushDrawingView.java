@@ -21,7 +21,7 @@ import java.util.List;
 
 public class BrushDrawingView extends View {
 
-    private float mBrushSize = 25;
+    private float mBrushSize = 10;
     private float mBrushEraserSize = 50;
     private int mOpacity = 255;
 
