@@ -8,8 +8,14 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -19,9 +25,19 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.RequestBuilder;
+import com.bumptech.glide.RequestManager;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.e.com.videoandimageuploaddemo.ImageEditing.EditImageActivity;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.Random;
 
 public class ImageEditFragment extends DialogFragment implements OnTouchListener, OnClickListener
     {
@@ -36,6 +52,7 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
         private String url;
         private ImageView editImageView;
         public final int EDIT_IMAGE_REQUEST_CODE = 1111;
+        private String _savedImagePath;
         private SaveEditedImagesListener _saveEditedImagesListener;
 
 
@@ -87,6 +104,8 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                 imageView = view.findViewById(R.id.superSamplingView);
                 closeButton = view.findViewById(R.id.closeIcon);
                 editImageView = view.findViewById(R.id.editImageView);
+                ImageView shareImageView = view.findViewById(R.id.shareImageView);
+                shareImageView.setOnClickListener(this);
                 editImageView.setOnClickListener(this);
                 closeButton.setOnClickListener(this);
                 imageView.setOnTouchListener(this);
@@ -100,11 +119,73 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                 mScaleGestureDetector = new ScaleGestureDetector(getActivity(), new ScaleListener());
                 url = getArguments().getString("url");
 
-                Glide.with(getActivity()).load(url)
-                        .thumbnail(1f)
-                        .into((imageView));
+                if (url != null && (url.startsWith("http") || url.startsWith("https")))
+                    {
+                        RequestManager glide = Glide.with(getActivity());
+
+                        Glide.with(getActivity())
+                                .asBitmap()
+                                .load(url).into(new SimpleTarget<Bitmap>()
+                            {
+                                @Override
+                                public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition)
+                                    {
+                                        saveImage(resource);
+                                        imageView.setImageBitmap(resource);
+                                    }
+                            });
+
+                    }
+                else
+                    {
+                        Glide.with(getActivity()).load(url)
+                                .thumbnail(1f)
+                                .into((imageView));
+                    }
 
             }
+
+        private String saveImage(Bitmap image)
+            {
+                String savedImagePath = null;
+                Random random = new Random();
+                String imageFileName = "JPEG_" + random.nextInt() + ".jpg";
+                File storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                        + "/e-Emphasys");
+                boolean success = true;
+                if (!storageDir.exists())
+                    {
+                        success = storageDir.mkdirs();
+                    }
+                if (success)
+                    {
+                        File imageFile = new File(storageDir, imageFileName);
+                        savedImagePath = imageFile.getAbsolutePath();
+                        try
+                            {
+                                OutputStream fOut = new FileOutputStream(imageFile);
+                                image.compress(Bitmap.CompressFormat.JPEG, 100, fOut);
+                                fOut.close();
+                            } catch (Exception e)
+                            {
+                                e.printStackTrace();
+                            }
+
+                        galleryAddPic(savedImagePath);
+                        _savedImagePath = savedImagePath;
+                    }
+                return savedImagePath;
+            }
+
+        private void galleryAddPic(String imagePath)
+            {
+                Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                File f = new File(imagePath);
+                Uri contentUri = Uri.fromFile(f);
+                mediaScanIntent.setData(contentUri);
+                getActivity().sendBroadcast(mediaScanIntent);
+            }
+
 
         @Override
         public boolean onTouch(View v, MotionEvent event)
@@ -131,8 +212,27 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                             editImage();
                             break;
 
+                        case R.id.shareImageView:
+                            shareImage();
+                            break;
+
                     }
 
+            }
+
+        private void shareImage()
+            {
+                Intent share = new Intent(Intent.ACTION_SEND);
+                share.setType("image/*");
+                File imageFileToShare = new File(url);
+
+                if (!TextUtils.isEmpty(_savedImagePath))
+                    {
+                        imageFileToShare = new File(_savedImagePath);
+                    }
+                Uri uri = Uri.fromFile(imageFileToShare);
+                share.putExtra(Intent.EXTRA_STREAM, uri);
+                startActivity(Intent.createChooser(share, "Share Image!"));
             }
 
         private void toggleView()
@@ -162,6 +262,7 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                         imageView.setScaleY(mScaleFactor);
                         return true;
                     }
+
             }
 
 
@@ -225,7 +326,11 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                                 intent.putExtra("url", data.getExtras().getString("url"));
                                 intent.putExtra("id", data.getExtras().getInt("id"));
                                 _saveEditedImagesListener.onSaveEditedImages(data.getExtras().getString("url"), data.getExtras().getInt("id"));
-                                dismiss();
+                                //  dismiss();
+                                _savedImagePath = data.getExtras().getString("url");
+                                Glide.with(getActivity()).load(data.getExtras().getString("url"))
+                                        .thumbnail(1f)
+                                        .into((imageView));
                             }
 
                     }
@@ -235,5 +340,4 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
             {
                 _saveEditedImagesListener = saveEditedImagesListener;
             }
-
     }

@@ -4,20 +4,20 @@
      <item
          android:id="@+id/action_camera_image"
          android:orderInCategory="100"
-         android:title="Take a Pick"
+         android:title="Capture Image"
          app:showAsAction="never" />
 
          <item
              android:id="@+id/action_camera_video"
              android:orderInCategory="100"
-             android:title="Take a Video"
+             android:title="Record Video"
              app:showAsAction="never" />
 
 
      <item
          android:id="@+id/action_select"
          android:orderInCategory="100"
-         android:title="Choose From Gallary"
+         android:title="Select From Gallary"
          app:showAsAction="never" />
 
       <item

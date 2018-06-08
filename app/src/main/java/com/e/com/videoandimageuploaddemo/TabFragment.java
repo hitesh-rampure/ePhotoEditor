@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
@@ -58,9 +59,11 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 public class TabFragment extends android.support.v4.app.Fragment implements MultiSelectorListener, SaveEditedImagesListener
@@ -142,6 +145,8 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                         GridLayoutManager(getActivity(), 5));
 
                 _recyclerView.setHasFixedSize(true);
+                _recyclerView.setNestedScrollingEnabled(false);
+
                 _recyclerView.addItemDecoration(new
 
                         SpacesItemDecoration(10));
@@ -181,8 +186,6 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
             {
             }
 
-        @TargetApi(VERSION_CODES.LOLLIPOP)
-        @RequiresApi(api = VERSION_CODES.LOLLIPOP)
         @Override
         public void onClick(ViewHolder view, boolean isSolved, int position, boolean isChecked, boolean isEditCheckBoxEnabled)
             {
@@ -212,10 +215,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                 else if (selectedDataList.get(position).getDataType() == DataType.ITEM_TYPE_PICTURES)
                     {
                         ImageEditFragment imageEditFragment = new ImageEditFragment();
-                        imageEditFragment.setSharedElementEnterTransition(new DetailsTransition());
-                        imageEditFragment.setEnterTransition(new Fade());
                         setExitTransition(new Fade());
-                        imageEditFragment.setSharedElementReturnTransition(new DetailsTransition());
                         Bundle bundle = new Bundle();
                         bundle.putString("url", selectedDataList.get(position).getUrl());
                         bundle.putInt("id", selectedDataList.get(position).getId());
@@ -273,20 +273,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                     }
             }
 
-        public class DetailsTransition extends TransitionSet
-            {
-                @RequiresApi(api = VERSION_CODES.LOLLIPOP)
-                public DetailsTransition()
-                    {
-                        setOrdering(ORDERING_TOGETHER);
-                        addTransition(new ChangeBounds()).
-                                addTransition(new ChangeTransform()).
-                                addTransition(new ChangeImageTransform());
-                    }
 
-            }
-
-        @RequiresApi(api = VERSION_CODES.M)
         @Override
         public boolean onOptionsItemSelected(MenuItem item)
             {
@@ -329,39 +316,104 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                     }
             }
 
-        @RequiresApi(api = VERSION_CODES.M)
         private void openCameraForVideo()
             {
                 selectedImagePath = new HashSet<>();
-                if (getActivity().checkSelfPermission(Manifest.permission.CAMERA)
-                        != PackageManager.PERMISSION_GRANTED && getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED)
+                if (android.os.Build.VERSION.SDK_INT >= VERSION_CODES.M)
                     {
-                        requestPermissions(new String[]{Manifest.permission.CAMERA, permission.WRITE_EXTERNAL_STORAGE},
-                                102);
+                        if (getActivity().checkSelfPermission(Manifest.permission.CAMERA)
+                                != PackageManager.PERMISSION_GRANTED && getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                != PackageManager.PERMISSION_GRANTED)
+                            {
+                                requestPermissions(new String[]{Manifest.permission.CAMERA, permission.WRITE_EXTERNAL_STORAGE},
+                                        102);
+                            }
+                        else
+                            {
+                                Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+                                List<Intent> intentList = new ArrayList<>();
+                                intentList = addIntentsToList(getActivity(), intentList, cameraIntent);
+                                if (intentList.size() > 1)
+                                    {
+                                        intentList.clear();
+                                        intentList.add(cameraIntent);
+                                        cameraIntent = Intent.createChooser(intentList.get(0),
+                                                "");
+                                    }
+                                if (cameraIntent.resolveActivity(getActivity().getPackageManager()) != null)
+                                    {
+                                        startActivityForResult(cameraIntent, CAMERA_REQUEST_FOR_VIDEO);
+                                    }
+                            }
                     }
                 else
                     {
                         Intent cameraIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-                        startActivityForResult(cameraIntent, CAMERA_REQUEST_FOR_VIDEO);
+
+                        List<Intent> intentList = new ArrayList<>();
+                        intentList = addIntentsToList(getActivity(), intentList, cameraIntent);
+                        if (intentList.size() > 1)
+                            {
+                                intentList.clear();
+                                intentList.add(cameraIntent);
+                                cameraIntent = Intent.createChooser(intentList.get(0),
+                                        "");
+                            }
+
+                        if (cameraIntent.resolveActivity(getActivity().getPackageManager()) != null)
+                            {
+                                startActivityForResult(cameraIntent, CAMERA_REQUEST_FOR_VIDEO);
+                            }
                     }
             }
 
-        @RequiresApi(api = VERSION_CODES.M)
+
+        private List<Intent> addIntentsToList(Context context, List<Intent> list, Intent intent)
+            {
+                List<ResolveInfo> resInfo = context.getPackageManager().queryIntentActivities(intent, 0);
+                for (ResolveInfo resolveInfo : resInfo)
+                    {
+                        String packageName = resolveInfo.activityInfo.packageName;
+                        Intent targetedIntent = new Intent(intent);
+                        targetedIntent.setPackage(packageName);
+                        list.add(targetedIntent);
+                    }
+                return list;
+            }
+
+
         private void openCameraForImage()
             {
                 selectedImagePath = new HashSet<>();
-                if (getActivity().checkSelfPermission(Manifest.permission.CAMERA)
-                        != PackageManager.PERMISSION_GRANTED && getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        != PackageManager.PERMISSION_GRANTED)
+
+                if (android.os.Build.VERSION.SDK_INT >= VERSION_CODES.M)
                     {
-                        requestPermissions(new String[]{Manifest.permission.CAMERA, permission.WRITE_EXTERNAL_STORAGE},
-                                100);
+
+                        if (getActivity().checkSelfPermission(Manifest.permission.CAMERA)
+                                != PackageManager.PERMISSION_GRANTED && getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                != PackageManager.PERMISSION_GRANTED)
+                            {
+                                requestPermissions(new String[]{Manifest.permission.CAMERA, permission.WRITE_EXTERNAL_STORAGE},
+                                        100);
+                            }
+                        else
+                            {
+                                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+                                if (cameraIntent.resolveActivity(getActivity().getPackageManager()) != null)
+                                    {
+                                        startActivityForResult(cameraIntent, CAMERA_REQUEST_FOR_IMAGE);
+                                    }
+                            }
                     }
                 else
                     {
                         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                        startActivityForResult(cameraIntent, CAMERA_REQUEST_FOR_IMAGE);
+
+                        if (cameraIntent.resolveActivity(getActivity().getPackageManager()) != null)
+                            {
+                                startActivityForResult(cameraIntent, CAMERA_REQUEST_FOR_IMAGE);
+                            }
                     }
             }
 
