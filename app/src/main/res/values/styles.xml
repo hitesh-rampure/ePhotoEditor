@@ -9,10 +9,10 @@
     </style>
 
     <style name="CUSTOM.DIALOG" parent="android:Theme">
-	    <item name="android:windowNoTitle">true</item>
-	    <item name="android:windowFullscreen">true</item>
-	    <item name="android:windowIsFloating">false</item>
-	</style>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowIsFloating">false</item>
+    </style>
 
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -23,7 +23,7 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
-       <style name="EditText">
+    <style name="EditText">
         <item name="android:singleLine">true</item>
         <item name="colorControlNormal">#FFFFFF</item>
         <item name="colorControlActivated">#FFFFFF</item>

@@ -43,6 +43,7 @@
         android:background="#99000000"
         android:padding="8dp"
         android:src="@drawable/ic_undo"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/constraintTools"
         app:layout_constraintEnd_toStartOf="@+id/imgRedo" />
 
@@ -53,6 +54,7 @@
         android:background="#99000000"
         android:padding="8dp"
         android:src="@drawable/ic_redo"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/constraintTools"
         app:layout_constraintEnd_toEndOf="parent" />
 
@@ -63,6 +65,7 @@
         android:background="#99000000"
         android:padding="8dp"
         android:src="@drawable/ic_gallery"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/constraintTools"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -73,6 +76,7 @@
         android:background="#99000000"
         android:padding="8dp"
         android:src="@drawable/ic_camera"
+        android:visibility="gone"
         app:layout_constraintBottom_toTopOf="@+id/constraintTools"
         app:layout_constraintStart_toEndOf="@id/imgGallery" />
 
@@ -115,7 +119,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:src="@drawable/ic_save"
+        android:src="@drawable/ic_save_image"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/guideline" />

@@ -16,39 +16,39 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-         <provider
-             android:name=".GenericFileProvider"
-             android:authorities="${applicationId}.com.e.com.videoandimageuploaddemo.provider"
-             android:exported="false"
-             android:grantUriPermissions="true">
+        <provider
+            android:name=".GenericFileProvider"
+            android:authorities="${applicationId}.com.e.com.videoandimageuploaddemo.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths" />
         </provider>
+
         <activity
             android:name=".MainActivity"
             android:screenOrientation="sensorPortrait">
-            >
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
 
-
             </intent-filter>
-               <meta-data
-                   android:name="android.app.default_searchable"
-                   android:value=".SearchResultActivity" />
+            <meta-data
+                android:name="android.app.default_searchable"
+                android:value=".SearchResultActivity" />
         </activity>
 
-         <activity
+        <activity
 
-             android:name=".SearchResultActivity"
-             android:label="@string/app_name"
-             android:screenOrientation="sensorPortrait">
+            android:name=".SearchResultActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="sensorPortrait">
 
-        <!-- to identify this activity as "searchable" -->
-             <intent-filter>
+            <!-- to identify this activity as "searchable" -->
+            <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
@@ -60,9 +60,9 @@
 
         <activity
             android:name=".ImageEditing.EditImageActivity"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar">
-                   </activity>
+            android:screenOrientation="sensorPortrait"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+
         <meta-data
             android:name="preloaded_fonts"
             android:resource="@array/preloaded_fonts" />
@@ -70,4 +70,4 @@
 
     </application>
 
-    </manifest>
+</manifest>

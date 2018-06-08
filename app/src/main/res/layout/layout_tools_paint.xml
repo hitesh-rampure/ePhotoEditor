@@ -8,10 +8,12 @@
     android:paddingTop="8dp">
 
     <RelativeLayout
+        android:id="@+id/layoutPencil"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|center_vertical"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:clickable="true">
 
         <ImageView
             android:id="@+id/imgPencil"
@@ -23,21 +25,25 @@
             android:src="@drawable/ic_brush" />
 
         <TextView
+            android:id="@+id/txtPencil"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/imgPencil"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="4dp"
+            android:clickable="true"
             android:text="@string/label_brush"
             android:textColor="@android:color/white" />
 
     </RelativeLayout>
 
     <RelativeLayout
+        android:id="@+id/layoutText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|center_vertical"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:clickable="true">
 
         <ImageView
             android:id="@+id/imgText"
@@ -49,23 +55,27 @@
             android:src="@drawable/ic_text" />
 
         <TextView
+            android:id="@+id/txtText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/imgText"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="4dp"
+            android:clickable="true"
             android:text="Text"
             android:textColor="@android:color/white" />
     </RelativeLayout>
 
     <RelativeLayout
+        android:id="@+id/layoutEraser"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|center_vertical"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:clickable="true">
 
         <ImageView
-            android:id="@+id/btnEraser"
+            android:id="@+id/imgEraser"
             android:layout_width="@dimen/editor_size"
             android:layout_height="@dimen/editor_size"
             android:layout_centerHorizontal="true"
@@ -75,12 +85,74 @@
             android:src="@drawable/ic_eraser" />
 
         <TextView
+            android:id="@+id/txtEraser"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/btnEraser"
+            android:layout_below="@id/imgEraser"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="4dp"
+            android:clickable="true"
             android:text="Eraser"
+            android:textColor="@android:color/white" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/layoutUndo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:layout_weight="1"
+        android:clickable="true">
+
+        <ImageView
+            android:id="@+id/imgUndo"
+            android:layout_width="@dimen/editor_size"
+            android:layout_height="@dimen/editor_size"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="4dp"
+            android:layout_marginTop="8dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_undo" />
+
+        <TextView
+            android:id="@+id/txtUndo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/imgUndo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="4dp"
+            android:clickable="true"
+            android:text="Undo"
+            android:textColor="@android:color/white" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/layoutRedo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:layout_weight="1"
+        android:clickable="true">
+
+        <ImageView
+            android:id="@+id/imgRedo"
+            android:layout_width="@dimen/editor_size"
+            android:layout_height="@dimen/editor_size"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="4dp"
+            android:layout_marginTop="8dp"
+            android:padding="4dp"
+            android:src="@drawable/ic_redo" />
+
+        <TextView
+            android:id="@+id/txtRedo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/imgRedo"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="4dp"
+            android:clickable="true"
+            android:text="Redo"
             android:textColor="@android:color/white" />
     </RelativeLayout>
 
