@@ -127,7 +127,11 @@ public class PhotoEditor implements BrushViewChangeListener {
         final ImageView imgClose = textRootView.findViewById(R.id.imgPhotoEditorClose);
         final FrameLayout frmBorder = textRootView.findViewById(R.id.frmBorder);
 
-        textInputTv.setText(text);
+//        textInputTv.setText(text);
+
+//        Add Numbering to annotations
+        textInputTv.setText((addedViews.size() + 1) + ". " + text);
+
         textInputTv.setTextColor(colorCodeTextView);
         if (textTypeface != null) {
             textInputTv.setTypeface(textTypeface);
