@@ -105,6 +105,7 @@ public class TextEditorDialogFragment extends DialogFragment {
 
         //Make a callback on activity when user is done with text editing
         mAddTextDoneTextView.setOnClickListener(new View.OnClickListener() {
+
             @Override
             public void onClick(View view) {
                 mInputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);
@@ -117,7 +118,6 @@ public class TextEditorDialogFragment extends DialogFragment {
         });
 
     }
-
 
     //Callback to listener if user is done with text editing
     public void setOnTextEditorListener(TextEditor textEditor) {
