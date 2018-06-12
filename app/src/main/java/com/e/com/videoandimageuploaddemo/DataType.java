@@ -13,7 +13,7 @@ public enum DataType
                 _type = type;
             }
 
-        public static DataType getItemType(String type)
+        public DataType getItemType(String type)
             {
                 switch (type.toLowerCase())
                     {

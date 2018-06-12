@@ -24,15 +24,17 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
         private Context _context;
         private LinkedList<SelectedData> _selectedData;
         private MultiSelectorListener _multiSelectorListener;
-        int _position = -1;
+        private int _position = -1;
+        private int tabPosition;
 
 
-        MultipleSelectAdapter(Context context, MultiSelector multiSelector, LinkedList<SelectedData> selectedDataArrayList, MultiSelectorListener multiSelectorListener)
+        MultipleSelectAdapter(Context context, MultiSelector multiSelector, LinkedList<SelectedData> selectedDataArrayList, MultiSelectorListener multiSelectorListener, int position)
             {
                 _multiSelector = multiSelector;
                 _context = context;
                 _selectedData = selectedDataArrayList;
                 _multiSelectorListener = multiSelectorListener;
+                tabPosition = position;
             }
 
 
@@ -66,7 +68,8 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
 
                         if (selectedData.isSolved)
                             {
-                                if (_position == position)
+                                if (_position == position || mSolvedCheckBox.isChecked())
+
                                     {
                                         mSolvedCheckBox.setChecked(true);
                                     }
@@ -75,10 +78,12 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
                                         mSolvedCheckBox.setChecked(false);
                                     }
                                 mSolvedCheckBox.setVisibility(View.VISIBLE);
+                                selectedData.setSolved(selectedData.isSolved);
                             }
                         else
                             {
                                 mSolvedCheckBox.setChecked(false);
+                                selectedData.setSolved(selectedData.isSolved);
                                 mSolvedCheckBox.setVisibility(View.GONE);
                             }
 
@@ -296,4 +301,13 @@ public class MultipleSelectAdapter extends RecyclerView.Adapter<SwappingHolder>
                 return _selectedData.size();
             }
 
+        public LinkedList<SelectedData> get_selectedData()
+            {
+                return _selectedData;
+            }
+
+        public int getTabPosition()
+            {
+                return tabPosition;
+            }
     }
