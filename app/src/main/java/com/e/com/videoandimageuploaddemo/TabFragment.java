@@ -22,6 +22,7 @@ import android.net.Uri;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Images;
 import android.support.annotation.NonNull;
@@ -34,6 +35,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.ViewHolder;
+import android.text.TextUtils;
 import android.transition.ChangeBounds;
 import android.transition.ChangeImageTransform;
 import android.transition.ChangeTransform;
@@ -47,7 +49,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.CheckBox;
+import android.widget.TableLayout;
 import android.widget.Toast;
+import android.widget.Toolbar;
 
 import com.bignerdranch.android.multiselector.MultiSelector;
 import com.bignerdranch.android.multiselector.SelectableHolder;
@@ -76,6 +80,8 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
         private HashSet<String> selectedImagePath;
         private int CAMERA_REQUEST_FOR_IMAGE = 1888;
         private int CAMERA_REQUEST_FOR_VIDEO = 1889;
+        private updateViewPager updateViewPager;
+        private MultipleSelectAdapter multipleSelectAdapter;
 
 
         public static TabFragment getInstance(int position)
@@ -112,6 +118,8 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                 setHasOptionsMenu(true);
                 multiSelector = new MultiSelector();
                 _recyclerView = view.findViewById(R.id.recyclerView);
+                _recyclerView.setHasFixedSize(false);
+                _recyclerView.setNestedScrollingEnabled(false);
 
 
                 if (position == 0)
@@ -133,10 +141,10 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                             {
                                 SelectedData selectedData = new SelectedData();
                                 selectedData.setId(i);
-                                selectedData.setDataType(DataType.ITEM_TYPE_PICTURES);
-                                selectedData.setType("pictures");
+                                selectedData.setDataType(DataType.ITEM_TYPE_VIDEOS);
+                                selectedData.setType("video");
                                 selectedData.setSolved(false);
-                                selectedData.setUrl("http://i.imgur.com/zuG2bGQ.jpg");
+                                selectedData.setUrl("content://media/external/video/media/791");
                                 selectedDataList.add(selectedData);
                             }
                     }
@@ -144,8 +152,6 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
 
                         GridLayoutManager(getActivity(), 5));
 
-                _recyclerView.setHasFixedSize(true);
-                _recyclerView.setNestedScrollingEnabled(false);
 
                 _recyclerView.addItemDecoration(new
 
@@ -162,7 +168,8 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                             }
                     });
 
-                MultipleSelectAdapter multipleSelectAdapter = new MultipleSelectAdapter(getActivity(), multiSelector, selectedDataList, this);
+                multipleSelectAdapter = new MultipleSelectAdapter(getActivity(), multiSelector, selectedDataList, this, position);
+
                 _recyclerView.setAdapter(multipleSelectAdapter);
             }
 
@@ -457,7 +464,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
             {
                 selectedImagePath = new HashSet<>();
                 Intent intent = new Intent();
-                intent.setType("image/*");
+                intent.setType("image/* video/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 startActivityForResult(Intent.createChooser(intent,
@@ -475,7 +482,6 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                                 if (data.getData() != null)
                                     {
                                         Uri mImageUri = data.getData();
-
                                         selectedImagePath.add(mImageUri.toString());
                                     }
                                 else if (data.getClipData() != null)
@@ -489,7 +495,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                                                     }
                                             }
                                     }
-                                updateTheView("pictures", DataType.ITEM_TYPE_PICTURES);
+                                setVideoOrImage();
                             }
                         else if (requestCode == CAMERA_REQUEST_FOR_IMAGE)
                             {
@@ -520,6 +526,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
 
         private void updateTheView(String type, DataType dataType)
             {
+
                 for (String path : selectedImagePath)
                     {
                         SelectedData selectedData = new SelectedData();
@@ -536,8 +543,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                 stringHashSet.addAll(selectedDataList);
                 selectedDataList.clear();
                 selectedDataList.addAll(stringHashSet);
-                _recyclerView.getAdapter().notifyDataSetChanged();
-
+                multipleSelectAdapter.notifyDataSetChanged();
             }
 
         public String getRealPathFromURI(Context context, Uri contentUri)
@@ -576,4 +582,49 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                 _recyclerView.getAdapter().notifyDataSetChanged();
             }
 
+
+        void setVideoOrImage()
+            {
+                for (String uri : selectedImagePath)
+                    {
+                        if (uri.contains("video"))
+                            {
+                                updateViewPager.updateViewPager(1);
+
+                                new Handler().postDelayed(new Runnable()
+                                    {
+                                        @Override
+                                        public void run()
+                                            {
+
+                                                updateTheView("video", DataType.ITEM_TYPE_VIDEOS);
+
+                                            }
+                                    }, 2000);
+                            }
+                        else
+                            {
+                                updateViewPager.updateViewPager(0);
+                                new Handler().postDelayed(new Runnable()
+                                    {
+                                        @Override
+                                        public void run()
+                                            {
+                                                updateTheView("pictures", DataType.ITEM_TYPE_PICTURES);
+                                            }
+                                    }, 2000);
+                            }
+                    }
+            }
+
+
+        public void updateViewPager(updateViewPager updatePager)
+            {
+                updateViewPager = updatePager;
+            }
+
+        interface updateViewPager
+            {
+                void updateViewPager(int pageNumber);
+            }
     }

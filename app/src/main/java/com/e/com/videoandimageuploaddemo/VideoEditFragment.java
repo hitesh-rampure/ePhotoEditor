@@ -6,25 +6,40 @@ import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.ProgressDialog;
+import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.FileProvider;
+import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
+import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-public class VideoEditFragment extends DialogFragment
+import java.io.File;
+import java.net.URI;
+
+public class VideoEditFragment extends DialogFragment implements OnClickListener
     {
         private final int ANIMATION_TIME = 800;
         private VideoView videoView;
+        private MediaController media;
+        private FrameLayout parentVideoLayout;
+        private String uri;
+
 
         @Nullable
         @Override
@@ -40,30 +55,19 @@ public class VideoEditFragment extends DialogFragment
             {
                 super.onViewCreated(view, savedInstanceState);
 
-                videoView = (VideoView) view.findViewById(R.id.video_view);
-                final MediaController mediaController = new MediaController(getActivity());
-                mediaController.setMediaPlayer(videoView);
-                mediaController.setId(123);
-                videoView.setMediaController(mediaController);
-                String uri = getArguments().getString("uri");
-                videoView.setVideoURI(Uri.parse(uri));
-                ((ViewGroup) mediaController.getParent()).removeView(mediaController);
-                FrameLayout parentVideoLayout = ((FrameLayout) view.findViewById(R.id.layout_video));
+                videoView = view.findViewById(R.id.video_view);
+                parentVideoLayout = (view.findViewById(R.id.layout_video));
+                uri = getArguments().getString("uri");
+                new BackgroundAsyncTask().execute(uri);
 
-                FrameLayout.LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                layoutParams.gravity = Gravity.BOTTOM;
-                mediaController.setLayoutParams(layoutParams);
-                parentVideoLayout.addView(mediaController, layoutParams);
-                videoView.setOnCompletionListener(new OnCompletionListener()
-                    {
-                        @Override
-                        public void onCompletion(MediaPlayer mp)
-                            {
+                ImageView closeVideo = view.findViewById(R.id.closeVideo);
+                closeVideo.setOnClickListener(this);
 
-                                videoView.seekTo(0);
-                                Toast.makeText(getActivity(), "Playback Completed", Toast.LENGTH_SHORT).show();
-                            }
-                    });
+                ImageView shareVideo = view.findViewById(R.id.shareVideo);
+                shareVideo.setOnClickListener(this);
+
+                ImageView deleteVideo = view.findViewById(R.id.deleteVideo);
+                deleteVideo.setOnClickListener(this);
             }
 
         @Override
@@ -85,7 +89,7 @@ public class VideoEditFragment extends DialogFragment
                                 PropertyValuesHolder.ofFloat("alpha", 0.0f, 1.0f));
                         scaleDown.setDuration(ANIMATION_TIME);
                         scaleDown.start();
-                        videoView.start();
+
                     }
             }
 
@@ -143,6 +147,137 @@ public class VideoEditFragment extends DialogFragment
                     });
                 scaleDown.setDuration(ANIMATION_TIME);
                 scaleDown.start();
+
+            }
+
+        @Override
+        public void onClick(View v)
+            {
+                switch (v.getId())
+                    {
+                        case R.id.closeVideo:
+                            disMissFragment();
+                            break;
+
+                        case R.id.uploadVideo:
+                            break;
+
+                        case R.id.shareVideo:
+                            shareVideo();
+                            break;
+
+                        case R.id.deleteVideo:
+                            deleteVideo();
+                            break;
+                    }
+            }
+
+        private void deleteVideo()
+            {
+
+            }
+
+        private void shareVideo()
+            {
+                Intent share = new Intent(Intent.ACTION_SEND);
+                share.setType("video/*");
+                File imageFileToShare = new File(uri);
+
+
+                Uri apkURI = FileProvider.getUriForFile(
+                        getActivity(),
+                        getActivity().getApplicationContext()
+                                .getPackageName() + ".provider", imageFileToShare);
+                share.setDataAndType(apkURI, Intent.EXTRA_MIME_TYPES);
+                share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                share.putExtra(Intent.EXTRA_STREAM, uri);
+                startActivity(Intent.createChooser(share, "Share Video!"));
+            }
+
+
+        public class BackgroundAsyncTask extends AsyncTask<String, Uri, Void>
+            {
+                ProgressDialog dialog;
+
+                protected void onPreExecute()
+                    {
+                        dialog = new ProgressDialog(getActivity());
+                        dialog.setMessage("Loading, Please Wait...");
+                        dialog.setCancelable(true);
+                        dialog.show();
+                    }
+
+                protected void onProgressUpdate(final Uri... uri)
+                    {
+
+                        try
+                            {
+
+                                media = new MediaController(getActivity());
+                                media.setAnchorView(videoView);
+                                videoView.setMediaController(media);
+                                videoView.setVideoURI(Uri.parse(uri[0].toString()));
+                                videoView.requestFocus();
+
+                                ((ViewGroup) media.getParent()).removeView(media);
+
+                                FrameLayout.LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                                layoutParams.gravity = Gravity.BOTTOM;
+                                media.setLayoutParams(layoutParams);
+                                parentVideoLayout.addView(media, layoutParams);
+
+
+                                videoView.setOnPreparedListener(new OnPreparedListener()
+                                    {
+
+                                        public void onPrepared(MediaPlayer mp)
+                                            {
+                                                mp.start();
+                                                media.show(0);
+                                                dialog.dismiss();
+                                            }
+                                    });
+
+
+                            } catch (IllegalArgumentException e)
+                            {
+                                e.printStackTrace();
+                            } catch (IllegalStateException e)
+                            {
+                                e.printStackTrace();
+                            } catch (SecurityException e)
+                            {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+
+                        videoView.setOnCompletionListener(new OnCompletionListener()
+                            {
+                                @Override
+                                public void onCompletion(MediaPlayer mp)
+                                    {
+                                        mp.pause();
+                                        media.hide();
+                                    }
+                            });
+
+                    }
+
+                @Override
+                protected Void doInBackground(String... params)
+                    {
+                        try
+                            {
+                                Uri uri = Uri.parse(params[0]);
+                                publishProgress(uri);
+                            } catch (Exception e)
+                            {
+                                e.printStackTrace();
+                            }
+
+                        return null;
+                    }
+
 
             }
 

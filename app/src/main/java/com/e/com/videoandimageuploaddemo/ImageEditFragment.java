@@ -121,8 +121,6 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
 
                 if (url != null && (url.startsWith("http") || url.startsWith("https")))
                     {
-                        RequestManager glide = Glide.with(getActivity());
-
                         Glide.with(getActivity())
                                 .asBitmap()
                                 .load(url).into(new SimpleTarget<Bitmap>()
@@ -306,10 +304,20 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
 
         public void editImage()
             {
-                Intent intent = new Intent(getActivity(), EditImageActivity.class);
-                intent.putExtra("uri", url);
-                intent.putExtra("id", getArguments().getInt("id"));
-                startActivityForResult(intent, EDIT_IMAGE_REQUEST_CODE);
+                if (TextUtils.isEmpty(_savedImagePath))
+                    {
+                        Intent intent = new Intent(getActivity(), EditImageActivity.class);
+                        intent.putExtra("uri", url);
+                        intent.putExtra("id", getArguments().getInt("id"));
+                        startActivityForResult(intent, EDIT_IMAGE_REQUEST_CODE);
+                    }
+                else
+                    {
+                        Intent intent = new Intent(getActivity(), EditImageActivity.class);
+                        intent.putExtra("uri", Uri.fromFile(new File(_savedImagePath)).toString());
+                        intent.putExtra("id", getArguments().getInt("id"));
+                        startActivityForResult(intent, EDIT_IMAGE_REQUEST_CODE);
+                    }
 
             }
 
@@ -332,7 +340,6 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                                         .thumbnail(1f)
                                         .into((imageView));
                             }
-
                     }
             }
 
