@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -17,7 +18,12 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.Rect;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
@@ -57,14 +63,19 @@ import com.bignerdranch.android.multiselector.MultiSelector;
 import com.bignerdranch.android.multiselector.SelectableHolder;
 import com.e.com.videoandimageuploaddemo.MultipleSelectAdapter.PictureViewHolder;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -81,8 +92,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
         private int CAMERA_REQUEST_FOR_IMAGE = 1888;
         private int CAMERA_REQUEST_FOR_VIDEO = 1889;
         private updateViewPager updateViewPager;
-        private MultipleSelectAdapter multipleSelectAdapter;
-
+        private Uri imageUri;
 
         public static TabFragment getInstance(int position)
             {
@@ -144,7 +154,9 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                                 selectedData.setDataType(DataType.ITEM_TYPE_VIDEOS);
                                 selectedData.setType("video");
                                 selectedData.setSolved(false);
-                                selectedData.setUrl("content://media/external/video/media/791");
+                                String path = "android.resource://" + getActivity().getPackageName() + "/" + R.raw.big_buck_bunny;
+                                //selectedData.setUrl("http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4");
+                                selectedData.setUrl(path);
                                 selectedDataList.add(selectedData);
                             }
                     }
@@ -168,7 +180,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                             }
                     });
 
-                multipleSelectAdapter = new MultipleSelectAdapter(getActivity(), multiSelector, selectedDataList, this, position);
+                MultipleSelectAdapter multipleSelectAdapter = new MultipleSelectAdapter(getActivity(), multiSelector, selectedDataList, this, position);
 
                 _recyclerView.setAdapter(multipleSelectAdapter);
             }
@@ -240,14 +252,20 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
 
                         VideoEditFragment videoEditFragment = new VideoEditFragment();
                         Bundle bundle = new Bundle();
-                        bundle.putString("uri", getRealPathFromURI(getActivity(), Uri.parse(selectedDataList.get(position).getUrl())));
+                        if (selectedDataList.get(position).getUrl().startsWith("android.resource://"))
+                            {
+                                bundle.putString("uri", selectedDataList.get(position).getUrl());
+                            }
+                        else
+                            {
+                                bundle.putString("uri", getRealPathFromURI(getActivity(), Uri.parse(selectedDataList.get(position).getUrl())));
+                            }
                         videoEditFragment.setArguments(bundle);
                         FragmentManager fragmentManager = getActivity().getFragmentManager();
                         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                         videoEditFragment.show(fragmentManager, "tag");
                         fragmentTransaction.commit();
                     }
-
             }
 
 
@@ -405,7 +423,13 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                             }
                         else
                             {
+
+                                ContentValues values = new ContentValues();
+                                imageUri = getActivity().getContentResolver().insert(
+                                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
                                 Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
 
                                 if (cameraIntent.resolveActivity(getActivity().getPackageManager()) != null)
                                     {
@@ -415,8 +439,9 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                     }
                 else
                     {
-                        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
+                        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
                         if (cameraIntent.resolveActivity(getActivity().getPackageManager()) != null)
                             {
                                 startActivityForResult(cameraIntent, CAMERA_REQUEST_FOR_IMAGE);
@@ -483,6 +508,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                                     {
                                         Uri mImageUri = data.getData();
                                         selectedImagePath.add(mImageUri.toString());
+                                        setVideoOrImage(mImageUri.toString());
                                     }
                                 else if (data.getClipData() != null)
                                     {
@@ -492,18 +518,27 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                                                 for (int i = 0; i < data.getClipData().getItemCount(); i++)
                                                     {
                                                         selectedImagePath.add(data.getClipData().getItemAt(i).getUri().toString());
+                                                        setVideoOrImage(data.getClipData().getItemAt(i).getUri().toString());
                                                     }
                                             }
                                     }
-                                setVideoOrImage();
                             }
                         else if (requestCode == CAMERA_REQUEST_FOR_IMAGE)
                             {
-                                Bitmap photo = (Bitmap) data.getExtras().get("data");
-
-                                Uri tempUri = getImageUri(getContext(), photo);
-                                if (tempUri != null)
-                                    selectedImagePath.add(tempUri.toString());
+                                Bitmap photo = null;
+                                try
+                                    {
+                                        photo = Images.Media.getBitmap(
+                                                getActivity().getContentResolver(), imageUri);
+                                    } catch (IOException e)
+                                    {
+                                        e.printStackTrace();
+                                    }
+                                //Uri tempUri = getImageUri(getContext(), photo);
+                                if (imageUri != null)
+                                    {
+                                        selectedImagePath.add(imageUri.toString());
+                                    }
                                 updateTheView("pictures", DataType.ITEM_TYPE_PICTURES);
                             }
                         else if (requestCode == CAMERA_REQUEST_FOR_VIDEO)
@@ -543,8 +578,34 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                 stringHashSet.addAll(selectedDataList);
                 selectedDataList.clear();
                 selectedDataList.addAll(stringHashSet);
-                multipleSelectAdapter.notifyDataSetChanged();
+                _recyclerView.getAdapter().notifyDataSetChanged();
             }
+
+        private void updateTheViewForSelectedGallaryImages(String type, DataType dataType, String url)
+            {
+                for (SelectedData data : selectedDataList)
+                    {
+                        if ((data).getUrl().equalsIgnoreCase(url))
+                            {
+                                return;
+                            }
+                    }
+                SelectedData selectedData = new SelectedData();
+                selectedData.setUrl(url);
+                selectedData.setSolved(false);
+                selectedData.setChecked(false);
+                selectedData.setType(type);
+                selectedData.setDataType(dataType);
+                Random random = new Random();
+                selectedData.setId(random.nextInt());
+                LinkedHashSet<SelectedData> stringHashSet = new LinkedHashSet<>();
+                stringHashSet.add(selectedData);
+                stringHashSet.addAll(selectedDataList);
+                selectedDataList.clear();
+                selectedDataList.addAll(stringHashSet);
+                _recyclerView.getAdapter().notifyDataSetChanged();
+            }
+
 
         public String getRealPathFromURI(Context context, Uri contentUri)
             {
@@ -583,40 +644,18 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
             }
 
 
-        void setVideoOrImage()
+        void setVideoOrImage(String uri)
             {
-                for (String uri : selectedImagePath)
+
+                if (uri.contains("video"))
                     {
-                        if (uri.contains("video"))
-                            {
-                                updateViewPager.updateViewPager(1);
-
-                                new Handler().postDelayed(new Runnable()
-                                    {
-                                        @Override
-                                        public void run()
-                                            {
-
-                                                updateTheView("video", DataType.ITEM_TYPE_VIDEOS);
-
-                                            }
-                                    }, 2000);
-                            }
-                        else
-                            {
-                                updateViewPager.updateViewPager(0);
-                                new Handler().postDelayed(new Runnable()
-                                    {
-                                        @Override
-                                        public void run()
-                                            {
-                                                updateTheView("pictures", DataType.ITEM_TYPE_PICTURES);
-                                            }
-                                    }, 2000);
-                            }
+                        updateTheViewForSelectedGallaryImages("video", DataType.ITEM_TYPE_VIDEOS, uri);
+                    }
+                else
+                    {
+                        updateTheViewForSelectedGallaryImages("pictures", DataType.ITEM_TYPE_PICTURES, uri);
                     }
             }
-
 
         public void updateViewPager(updateViewPager updatePager)
             {
@@ -627,4 +666,5 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
             {
                 void updateViewPager(int pageNumber);
             }
+
     }
