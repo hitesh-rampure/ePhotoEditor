@@ -14,9 +14,11 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,6 +41,7 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
         private MediaController media;
         private FrameLayout parentVideoLayout;
         private String uri;
+        private Handler handler;
 
 
         @Nullable
@@ -58,8 +61,9 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                 videoView = view.findViewById(R.id.video_view);
                 parentVideoLayout = (view.findViewById(R.id.layout_video));
                 uri = getArguments().getString("uri");
-                new BackgroundAsyncTask().execute(uri);
 
+                handler = new Handler();
+                new BackgroundAsyncTask().execute(uri);
                 ImageView closeVideo = view.findViewById(R.id.closeVideo);
                 closeVideo.setOnClickListener(this);
 
@@ -217,7 +221,6 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                                 media.setAnchorView(videoView);
                                 videoView.setMediaController(media);
                                 videoView.setVideoURI(Uri.parse(uri[0].toString()));
-                                videoView.requestFocus();
 
                                 ((ViewGroup) media.getParent()).removeView(media);
 
@@ -234,7 +237,9 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                                             {
                                                 mp.start();
                                                 media.show(0);
+                                                handler.postDelayed(updateProgress, 0);
                                                 dialog.dismiss();
+                                                mp.setVideoScalingMode(MediaPlayer.VIDEO_SCALING_MODE_SCALE_TO_FIT);
                                             }
                                     });
 
@@ -256,11 +261,12 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                                 @Override
                                 public void onCompletion(MediaPlayer mp)
                                     {
+                                        handler.removeCallbacks(updateProgress);
+                                        mp.seekTo(0);
                                         mp.pause();
-                                        media.hide();
+                                        handler.postDelayed(updateProgress, 1000);
                                     }
                             });
-
                     }
 
                 @Override
@@ -279,6 +285,16 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                     }
 
 
+                private Runnable updateProgress = new Runnable()
+                    {
+                        @Override
+                        public void run()
+                            {
+
+                                media.show(0);
+                                handler.postDelayed(updateProgress, 1000);
+                            }
+                    };
             }
 
 

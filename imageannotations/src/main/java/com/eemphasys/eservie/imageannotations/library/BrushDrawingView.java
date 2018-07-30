@@ -16,6 +16,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.eemphasys.eservie.imageannotations.R;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -174,8 +176,9 @@ public class BrushDrawingView extends View
         @Override
         protected void onSizeChanged(int w, int h, int oldw, int oldh)
             {
-                super.onSizeChanged(w, 200, oldw, oldh);
-                Bitmap canvasBitmap = Bitmap.createBitmap(w, 200, Bitmap.Config.ARGB_8888);
+                h = (int) getResources().getDimension(R.dimen.default_EditImage_Size_height);
+                super.onSizeChanged(w, h, oldw, oldh);
+                Bitmap canvasBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
                 mDrawCanvas = new Canvas(canvasBitmap);
             }
 
