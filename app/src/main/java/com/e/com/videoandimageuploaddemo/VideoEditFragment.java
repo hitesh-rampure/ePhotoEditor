@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.app.ProgressDialog;
@@ -17,8 +18,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
-import android.text.TextUtils;
-import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,13 +28,29 @@ import android.widget.FrameLayout;
 import android.widget.FrameLayout.LayoutParams;
 import android.widget.ImageView;
 import android.widget.MediaController;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-import java.io.File;
-import java.net.URI;
+import com.github.tcking.giraffecompressor.GiraffeCompressor;
+import com.github.tcking.giraffecompressor.GiraffeCompressor.Result;
 
-public class VideoEditFragment extends DialogFragment implements OnClickListener
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+
+public class VideoEditFragment extends DialogFragment implements OnClickListener, OnWebServiceResponse
     {
         private final int ANIMATION_TIME = 800;
         private VideoView videoView;
@@ -42,7 +58,13 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
         private FrameLayout parentVideoLayout;
         private String uri;
         private Handler handler;
+        private FileUploadService mFileUploadService;
+        private Intent mServiceIntent;
+        private ProgressBar progressBar;
+        private int BIT_RATE = 999999;
+        private float SCALE_FACTOR = 1.0f;
 
+        public static String filePath = "";
 
         @Nullable
         @Override
@@ -72,6 +94,9 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
 
                 ImageView deleteVideo = view.findViewById(R.id.deleteVideo);
                 deleteVideo.setOnClickListener(this);
+                view.findViewById(R.id.uploadVideo).setOnClickListener(this);
+
+                progressBar = view.findViewById(R.id.pb_default);
             }
 
         @Override
@@ -95,6 +120,70 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                         scaleDown.start();
 
                     }
+            }
+
+
+        void compreesVideo()
+            {
+
+                progressBar.setVisibility(View.VISIBLE);
+
+                final File inputFile = new File(uri);
+
+                try
+                    {
+                        final File outputFile = new File("/sdcard/temp.mp4");
+                        GiraffeCompressor.init(getActivity());
+
+                        GiraffeCompressor.create() //two implementations: mediacodec and ffmpeg,default is mediacodec
+                                .input(inputFile) //set video to be compressed
+                                .output(outputFile) //set compressed video output
+                                .bitRate(BIT_RATE)//set bitrate 码率
+                                .resizeFactor(SCALE_FACTOR)//set video resize factor 分辨率缩放,默认保持原分辨率
+                                // .watermark("/sdcard/videoCompressor/watermarker.png")//add watermark(take a long time) 水印图片(需要长时间处理)
+                                .ready()
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(new Subscriber<Result>()
+                                    {
+                                        @Override
+                                        public void onCompleted()
+                                            {
+
+                                                try
+                                                    {
+                                                        Toast.makeText(getActivity(), "Compressed", Toast.LENGTH_SHORT).show();
+                                                        Log.e("OutputFilePath", outputFile.getAbsolutePath());
+                                                        uploadVideo(outputFile);
+
+                                                    } catch (Exception e)
+                                                    {
+                                                        e.printStackTrace();
+                                                    }
+                                            }
+
+                                        @Override
+                                        public void onError(Throwable e)
+                                            {
+                                                try
+                                                    {
+                                                        uploadVideo(inputFile);
+                                                    } catch (Exception ex)
+                                                    {
+                                                        ex.printStackTrace();
+                                                    }
+                                            }
+
+                                        @Override
+                                        public void onNext(GiraffeCompressor.Result s)
+                                            {
+
+                                            }
+                                    });
+                    } catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+
             }
 
         private void releasePlayer()
@@ -164,6 +253,16 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                             break;
 
                         case R.id.uploadVideo:
+
+                            try
+                                {
+
+                                    compreesVideo();
+                                    //uploadVideo();
+                                } catch (Exception e)
+                                {
+                                    e.printStackTrace();
+                                }
                             break;
 
                         case R.id.shareVideo:
@@ -196,6 +295,39 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                 share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 share.putExtra(Intent.EXTRA_STREAM, uri);
                 startActivity(Intent.createChooser(share, "Share Video!"));
+            }
+
+        @Override
+        public void onSuccess()
+            {
+
+
+                getActivity().runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                            {
+                                progressBar.setVisibility(View.GONE);
+                                Toast.makeText(getActivity(), "Success", Toast.LENGTH_SHORT).show();
+                            }
+                    });
+
+            }
+
+        @Override
+        public void onFailure()
+            {
+                getActivity().runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                            {
+                                progressBar.setVisibility(View.GONE);
+
+                                Toast.makeText(getActivity(), "Failed", Toast.LENGTH_SHORT).show();
+                            }
+                    });
+
             }
 
 
@@ -235,7 +367,7 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
 
                                         public void onPrepared(MediaPlayer mp)
                                             {
-                                                mp.start();
+                                                //mp.start();
                                                 media.show(0);
                                                 handler.postDelayed(updateProgress, 0);
                                                 dialog.dismiss();
@@ -298,4 +430,101 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
             }
 
 
+        void uploadVideo(File inputFile) throws IOException
+            {
+
+                File imageFileToShare = inputFile;
+                filePath = imageFileToShare.getAbsolutePath();
+
+
+                ArrayList<Map<Object, Object>> fileChunks = fileToChunks(imageFileToShare.getAbsolutePath().toString(),
+                        imageFileToShare.getName());
+                ArrayList<String> files = null;
+
+                if (fileChunks != null && fileChunks.size() > 0)
+                    {
+                        // CDHelper.SaveFileChunks(fileName, fileChunks);
+                        if (files == null)
+                            files = new ArrayList<String>();
+                        files.add(imageFileToShare.getName());
+                        FileUploadPool.fileChunks = fileChunks;
+                    }
+
+                if (files != null && files.size() > 0)
+                    {
+                        //4. call the service to send chunks to server
+                        {
+                            mFileUploadService = new FileUploadService(getActivity(), this);
+
+                            mServiceIntent = new Intent(getActivity(), mFileUploadService.getClass());
+
+                            mServiceIntent.putExtra("FileName", imageFileToShare.getName());
+
+                            //mFileUploadService.startService(mServiceIntent);
+
+                            if (isMyServiceRunning(mFileUploadService.getClass()))
+                                getActivity().stopService(mServiceIntent);
+                            getActivity().startService(mServiceIntent);
+                        }
+                    }
+            }
+
+        private ArrayList<Map<Object, Object>> fileToChunks(String filePath, String fileName)
+            {
+                ArrayList<Map<Object, Object>> chunks = null;
+                File file = new File(filePath);
+                if (file.exists())
+                    {
+                        chunks = new ArrayList<>();
+                        FileInputStream fis;
+                        ByteArrayOutputStream bos;
+                        int bytesAvailable;
+                        byte[] buffer;
+                        try
+                            {
+                                fis = new FileInputStream(file);
+                                bytesAvailable = fis.available();
+                                int bufferSize = Math.min(bytesAvailable, AppConstants.VideoFileChunkSize);
+                                buffer = new byte[bufferSize];
+                                bos = new ByteArrayOutputStream();
+                                for (int readNum; (readNum = fis.read(buffer)) != -1; )
+                                    {
+                                        bos.write(buffer, 0, readNum);
+                                    }
+
+                                byte[] filebytes = bos.toByteArray();
+                                int j = 1;
+                                for (int i = 0; i <= filebytes.length; i += AppConstants.VideoFileChunkSize)
+                                    {
+                                        Map<Object, Object> fileChunk = new HashMap();
+                                        fileChunk.put("ChunkID", j);
+                                        fileChunk.put("FileName", fileName);
+                                        fileChunk.put("Offset", i);
+                                        fileChunk.put("Uploaded", "0");
+                                        chunks.add(fileChunk);
+                                        j++;
+                                    }
+                                for (Map<Object, Object> chunk : chunks)
+                                    chunk.put("ChunkName", fileName + ".part_" + chunk.get("ChunkID").toString() + "." + String.valueOf(chunks.size()));
+
+                            } catch (Exception e)
+                            {
+                                e.printStackTrace();
+                            }
+                    }
+                return chunks;
+            }
+
+        private boolean isMyServiceRunning(Class<?> serviceClass)
+            {
+                ActivityManager manager = (ActivityManager) getActivity().getSystemService(getActivity().ACTIVITY_SERVICE);
+                for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
+                    {
+                        if (serviceClass.getName().equals(service.service.getClassName()))
+                            {
+                                return true;
+                            }
+                    }
+                return false;
+            }
     }

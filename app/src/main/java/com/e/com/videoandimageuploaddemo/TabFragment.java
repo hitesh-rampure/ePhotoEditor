@@ -231,7 +231,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
                                 _recyclerView.getAdapter().notifyDataSetChanged();
                             }
                     }
-                else if (selectedDataList.get(position).getDataType() == DataType.ITEM_TYPE_PICTURES)
+                else if (selectedDataList.get(position).getDataType() == DataType.ITEM_TYPE_PICTURES || selectedDataList.get(position).getDataType() == DataType.ITEM_TYPE_DOCUMENTS)
                     {
                         ImageEditFragment imageEditFragment = new ImageEditFragment();
                         setExitTransition(new Fade());
@@ -489,7 +489,7 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
             {
                 selectedImagePath = new HashSet<>();
                 Intent intent = new Intent();
-                intent.setType("image/* video/*");
+                intent.setType("image/* video/* application/*");
                 intent.setAction(Intent.ACTION_GET_CONTENT);
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 startActivityForResult(Intent.createChooser(intent,
@@ -646,12 +646,18 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
 
         void setVideoOrImage(String uri)
             {
+                String[] matches = new String[] {".pdf", ".doc",".dox",".ms-powerpoint","ms-excel"};
 
                 if (uri.contains("video"))
                     {
                         updateTheViewForSelectedGallaryImages("video", DataType.ITEM_TYPE_VIDEOS, uri);
                     }
+                else if (uri.contains(".pdf"))
+                    {
+                        updateTheViewForSelectedGallaryImages("documents", DataType.ITEM_TYPE_DOCUMENTS, uri);
+                    }
                 else
+
                     {
                         updateTheViewForSelectedGallaryImages("pictures", DataType.ITEM_TYPE_PICTURES, uri);
                     }
