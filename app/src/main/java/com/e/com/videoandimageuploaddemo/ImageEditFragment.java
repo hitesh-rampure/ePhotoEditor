@@ -5,6 +5,7 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.Intent;
@@ -25,6 +26,7 @@ import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -34,12 +36,20 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.e.com.videoandimageuploaddemo.ImageEditing.EditImageActivity;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
-public class ImageEditFragment extends DialogFragment implements OnTouchListener, OnClickListener
+public class ImageEditFragment extends DialogFragment implements OnTouchListener, OnClickListener, OnWebServiceResponse
     {
 
         private ImageView imageView;
@@ -54,6 +64,11 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
         public final int EDIT_IMAGE_REQUEST_CODE = 1111;
         private String _savedImagePath;
         private SaveEditedImagesListener _saveEditedImagesListener;
+        public static String filePath = "";
+        private FileUploadService mFileUploadService;
+        private Intent mServiceIntent;
+        private ProgressBar progressBar;
+        private ImageView uploadImageOrDocuments;
 
 
         @Override
@@ -110,6 +125,8 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                 closeButton.setOnClickListener(this);
                 imageView.setOnTouchListener(this);
 
+                uploadImageOrDocuments = view.findViewById(R.id.upload);
+                uploadImageOrDocuments.setOnClickListener(this);
                 view.findViewById(R.id.edit_parent).setOnClickListener(this);
 
 
@@ -140,7 +157,7 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                                 .thumbnail(1f)
                                 .into((imageView));
                     }
-
+                progressBar = view.findViewById(R.id.pb_default);
             }
 
         private String saveImage(Bitmap image)
@@ -212,6 +229,24 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
 
                         case R.id.shareImageView:
                             shareImage();
+                            break;
+                        case R.id.upload:
+                            try
+                                {
+
+                                    Uri uri = Uri.parse(url);
+                                    File file = new File(uri.getPath());
+
+                                    if (uri.getPath().contains(".jpeg") || uri.getPath().contains(".png") || uri.getPath().contains(".PNG") || uri.getPath().contains(".JPEG") || uri.getPath().contains(".jpg") || uri.getPath().contains(".JPG"))
+                                        {
+                                            return;
+                                        }
+                                    progressBar.setVisibility(View.VISIBLE);
+                                    uploadVideo(file);
+                                } catch (IOException e)
+                                {
+                                    e.printStackTrace();
+                                }
                             break;
 
                     }
@@ -346,5 +381,152 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
         public void setOnSaveEditedImageListener(SaveEditedImagesListener saveEditedImagesListener)
             {
                 _saveEditedImagesListener = saveEditedImagesListener;
+            }
+
+
+        void uploadVideo(File inputFile) throws IOException
+            {
+
+                File imageFileToShare = inputFile;
+                filePath = imageFileToShare.getAbsolutePath();
+
+
+                ArrayList<Map<Object, Object>> fileChunks = fileToChunks(imageFileToShare.getAbsolutePath().toString(),
+                        imageFileToShare.getName());
+                ArrayList<String> files = null;
+
+                if (fileChunks != null && fileChunks.size() > 0)
+                    {
+                        // CDHelper.SaveFileChunks(fileName, fileChunks);
+                        if (files == null)
+                            files = new ArrayList<String>();
+                        files.add(imageFileToShare.getName());
+                        FileUploadService.fileChunks = fileChunks;
+                    }
+
+                if (files != null && files.size() > 0)
+                    {
+                        //4. call the service to send chunks to server
+                        {
+                            mFileUploadService = new FileUploadService(getActivity(), this,null);
+
+                            mServiceIntent = new Intent(getActivity(), mFileUploadService.getClass());
+
+                            mServiceIntent.putExtra("FileName", imageFileToShare.getName());
+
+                            //mFileUploadService.startService(mServiceIntent);
+
+                            if (isMyServiceRunning(mFileUploadService.getClass()))
+                                getActivity().stopService(mServiceIntent);
+                            getActivity().startService(mServiceIntent);
+                        }
+                    }
+            }
+
+        private ArrayList<Map<Object, Object>> fileToChunks(String filePath, String fileName)
+            {
+                ArrayList<Map<Object, Object>> chunks = null;
+
+                File file = new File(filePath);
+
+                if (!file.exists())
+                    {
+                        Uri uri = Uri.parse(filePath);
+                        if (uri.getPath() == null)
+                            {
+                                file = new File(uri.toString());
+                            }
+                        else
+                            {
+
+                                file = new File(uri.getPath());
+                            }
+                    }
+
+                if (file.exists())
+                    {
+                        chunks = new ArrayList<>();
+                        FileInputStream fis;
+                        ByteArrayOutputStream bos;
+                        int bytesAvailable;
+                        byte[] buffer;
+                        try
+                            {
+                                fis = new FileInputStream(file);
+                                bytesAvailable = fis.available();
+                                int bufferSize = Math.min(bytesAvailable, AppConstants.VideoFileChunkSize);
+                                buffer = new byte[bufferSize];
+                                bos = new ByteArrayOutputStream();
+                                for (int readNum; (readNum = fis.read(buffer)) != -1; )
+                                    {
+                                        bos.write(buffer, 0, readNum);
+                                    }
+
+
+                                byte[] filebytes = bos.toByteArray();
+                                int j = 1;
+                                for (int i = 0; i <= filebytes.length; i += AppConstants.VideoFileChunkSize)
+                                    {
+                                        Map<Object, Object> fileChunk = new HashMap();
+                                        fileChunk.put("ChunkID", j);
+                                        fileChunk.put("FileName", fileName);
+                                        fileChunk.put("Offset", i);
+                                        fileChunk.put("Uploaded", "0");
+                                        chunks.add(fileChunk);
+                                        j++;
+                                    }
+                                for (Map<Object, Object> chunk : chunks)
+                                    chunk.put("ChunkName", fileName + ".part_" + chunk.get("ChunkID").toString() + "." + String.valueOf(chunks.size()));
+
+                            } catch (Exception e)
+                            {
+                                e.printStackTrace();
+                            }
+                    }
+                return chunks;
+            }
+
+        private boolean isMyServiceRunning(Class<?> serviceClass)
+            {
+                ActivityManager manager = (ActivityManager) getActivity().getSystemService(getActivity().ACTIVITY_SERVICE);
+                for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
+                    {
+                        if (serviceClass.getName().equals(service.service.getClassName()))
+                            {
+                                return true;
+                            }
+                    }
+                return false;
+            }
+
+
+        @Override
+        public void onSuccess(int fileChunckUploaded)
+            {
+                getActivity().runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                            {
+                                progressBar.setVisibility(View.GONE);
+                                Toast.makeText(getActivity(), "Success", Toast.LENGTH_SHORT).show();
+
+                            }
+                    });
+            }
+
+        @Override
+        public void onFailure()
+            {
+                getActivity().runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                            {
+                                progressBar.setVisibility(View.GONE);
+                                Toast.makeText(getActivity(), "Failed", Toast.LENGTH_SHORT).show();
+                            }
+                    });
+
             }
     }

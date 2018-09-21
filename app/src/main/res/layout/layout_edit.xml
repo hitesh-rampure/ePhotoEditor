@@ -85,6 +85,7 @@
              android:layout_weight="0.1"
              android:src="@android:drawable/ic_menu_delete" />
          <ImageView
+             android:id="@+id/upload"
              android:layout_width="wrap_content"
              android:layout_height="wrap_content"
              android:layout_marginBottom="@dimen/normal_margin"
@@ -92,4 +93,19 @@
              android:src="@android:drawable/ic_menu_upload" />
 
         </LinearLayout>
+
+     <ProgressBar
+         android:id="@+id/pb_default"
+         style="@android:style/Widget.Holo.Light.ProgressBar.Large"
+         android:layout_width="200dp"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center"
+         android:visibility="gone"
+         tools:layout_editor_absoluteX="92dp"
+         tools:layout_editor_absoluteY="229dp"
+         app:layout_constraintBottom_toBottomOf="parent"
+         app:layout_constraintTop_toTopOf="parent"
+         app:layout_constraintLeft_toLeftOf="parent"
+         app:layout_constraintRight_toRightOf="parent"
+         />
 </android.support.constraint.ConstraintLayout>

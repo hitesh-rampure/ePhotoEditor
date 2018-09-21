@@ -24,10 +24,10 @@ public class ViewPagerAdapter extends FragmentPagerAdapter implements updateView
         @Override
         public Fragment getItem(int position)
             {
-                TabFragment tabFragment = TabFragment.getInstance(position);
-                tabFragment.updateViewPager(this);
+                // TabFragment tabFragment = TabFragment.getInstance(position);
+                //   tabFragment.updateViewPager(this);
 
-                return tabFragment;
+                return TabFragment.getInstance(position);
             }
 
         @Override

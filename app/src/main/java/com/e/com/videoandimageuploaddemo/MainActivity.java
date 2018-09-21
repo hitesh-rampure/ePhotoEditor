@@ -1,27 +1,20 @@
 package com.e.com.videoandimageuploaddemo;
 
-import android.app.Activity;
+import android.app.NotificationManager;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.support.v4.view.ViewPager.OnAdapterChangeListener;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.TableLayout;
 
 import com.e.com.videoandimageuploaddemo.TabFragment.updateViewPager;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
 
 public class MainActivity extends AppCompatActivity implements updateViewPager, OnPageChangeListener
     {
@@ -84,6 +77,24 @@ public class MainActivity extends AppCompatActivity implements updateViewPager, 
         @Override
         public void onPageScrollStateChanged(int state)
             {
+
+            }
+
+
+        @Override
+        protected void onDestroy()
+            {
+                super.onDestroy();
+
+                NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+                notificationManager.cancelAll();
+
+                Log.e("OnDestroy", "Service On Destroy");
+                Intent broadcastIntent = new Intent("ac.in.ActivityRecognition.RestartSensor");
+                sendBroadcast(broadcastIntent);
+
+                //stoptimertask();
+
 
             }
     }
