@@ -31,14 +31,14 @@ public class FileBO
 
         final SoapClient soapClient = new SoapClient();
         public String ErrorText = "";
-        private String serviceUrl = "http://192.168.25.36:10002/eServiceTechService_2.5/";
+        private String serviceUrl = "http://192.168.90.150:7001/";
 
         public ArrayList<Map<Object, Object>> GetAllFiles(String company, String SONo, String SOSNo, String unitNo, String fileType)
             {
                 ArrayList<Map<Object, Object>> result = null;
                 try
                     {
-                        soapClient.setServiceUrl("http://192.168.25.36:10001/eServiceTechService_2.5/ServiceManager/ServiceOrderService.svc");
+                        soapClient.setServiceUrl("http://192.168.90.150:7001/"+AppConstants.ServiceOrder_Service);
                         soapClient.setSoapAction("IServiceOrder/GetAllFiles");
                         String soapBody = String.format("<GetAllFiles xmlns=\"http://tempuri.org/\"><Company>%s</Company>" +
                                         "<ServiceOrderNumber>%s</ServiceOrderNumber><ServiceOrderSegment>%s</ServiceOrderSegment>" +
@@ -186,16 +186,15 @@ public class FileBO
                 return result;
             }
 
-        public Map<Object, Object> SaveChunkFiles(String fileName, Map<Object, Object> chunk, OnWebServiceResponse onWebServiceResponse)
+        public Map<Object, Object>
+        SaveChunkFiles(String fileName, Map<Object, Object> chunk, OnWebServiceResponse onWebServiceResponse)
             {
                 Map<Object, Object> result = null;
                 try
                     {
 
 
-                        soapClient.setServiceUrl(serviceUrl + AppConstants.ServiceOrder_Service);//"http://192.168.90.150:7001/ServiceManager/ServiceOrderService.svc"); ///eServiceTechService_2.5/ServiceManager/ServiceOrderService.svc");
-
-                        //soapClient.setServiceUrl("http://192.168.90.150:7001/ServiceManager/ServiceOrderService.svc");
+                        soapClient.setServiceUrl(serviceUrl+AppConstants.ServiceOrder_Service);//"http://192.168.90.150:7001/ServiceManager/ServiceOrderService.svc"); ///eServiceTechService_2.5/ServiceManager/ServiceOrderService.svc");
                         soapClient.setSoapAction("IServiceOrder/SaveChunkFiles");
                         String soapBody = String.format("<SaveChunkFiles xmlns=\"http://tempuri.org/\">" +
                                         "<Files xmlns:d4p1=\"http://schemas.datacontract.org/2004/07/eServiceTech.ServiceTechManager.DataContracts\" xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\">" +
@@ -230,11 +229,11 @@ public class FileBO
                                 "008", //  SessionHelper.getCredentials().getEmployeeNo(),
                                 "0",
                                 fileName,
-                                "others",
-                                "XYZ100337",
+                                "videos",
+                                "XYZ100433",
                                 "10",
                                 "akshay",
-                                "FM0000775",
+                                "MD0023342",
                                 chunk.get("ChunkData").toString(),
                                 ""
                         );
@@ -252,8 +251,9 @@ public class FileBO
                                         if (result != null && result.size() > 0)
                                             {
 
-                                                onWebServiceResponse.onSuccess();
-                                                
+                                                Log.e("ChunkID", "" + chunk.get("ChunkID").toString() + "Total" + FileUploadService.fileChunks.size());
+                                                onWebServiceResponse.onSuccess(Integer.valueOf(chunk.get("ChunkID").toString()));
+
 //                        CDHelper.UpdateFileChunkUploaded(fileName, chunk.get("ChunkID").toString(),
 //                                Boolean.valueOf(result.get("Status").toString()));
                                                 if (result.get("Status") != null && Boolean.valueOf(result.get("Status").toString()))

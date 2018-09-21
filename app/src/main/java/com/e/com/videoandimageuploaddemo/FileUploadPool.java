@@ -53,7 +53,7 @@ public class FileUploadPool implements Runnable
                             {
                                 //            if (fileData != null && fileData.size() > 0 && fileData.get("FilePath") != null)
                                 {
-                                    String filePath = ImageEditFragment.filePath;//fileData.get("FilePath").toString();
+                                    String filePath = VideoEditFragment.filePath;//fileData.get("FilePath").toString();
                                     Uri uri = Uri.parse(filePath);
                                     File file = new File(uri.getPath());
 

@@ -252,9 +252,12 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
 
                         VideoEditFragment videoEditFragment = new VideoEditFragment();
                         Bundle bundle = new Bundle();
-                        if (selectedDataList.get(position).getUrl().startsWith("android.resource://"))
+
+                        Uri uri = Uri.parse(selectedDataList.get(position).getUrl());
+                        File file = new File(uri.getPath());
+                        if (file.exists())
                             {
-                                bundle.putString("uri", selectedDataList.get(position).getUrl());
+                                bundle.putString("uri", file.getAbsolutePath());
                             }
                         else
                             {
@@ -646,9 +649,8 @@ public class TabFragment extends android.support.v4.app.Fragment implements Mult
 
         void setVideoOrImage(String uri)
             {
-                String[] matches = new String[] {".pdf", ".doc",".dox",".ms-powerpoint","ms-excel"};
 
-                if (uri.contains("video"))
+                if (uri.contains("video") || uri.contains(".mp4"))
                     {
                         updateTheViewForSelectedGallaryImages("video", DataType.ITEM_TYPE_VIDEOS, uri);
                     }

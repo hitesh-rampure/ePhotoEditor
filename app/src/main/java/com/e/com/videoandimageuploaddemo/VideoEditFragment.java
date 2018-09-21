@@ -7,7 +7,11 @@ import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
@@ -17,6 +21,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.Gravity;
@@ -38,11 +43,7 @@ import com.github.tcking.giraffecompressor.GiraffeCompressor.Result;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -65,6 +66,7 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
         private float SCALE_FACTOR = 1.0f;
 
         public static String filePath = "";
+        private UploadResultReceiver uploadResultReceiver;
 
         @Nullable
         @Override
@@ -83,6 +85,7 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                 videoView = view.findViewById(R.id.video_view);
                 parentVideoLayout = (view.findViewById(R.id.layout_video));
                 uri = getArguments().getString("uri");
+                uploadResultReceiver = new UploadResultReceiver(new Handler(), getActivity());
 
                 handler = new Handler();
                 new BackgroundAsyncTask().execute(uri);
@@ -132,7 +135,7 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
 
                 try
                     {
-                        final File outputFile = new File("/sdcard/temp.mp4");
+                        final File outputFile = new File("/sdcard/temp_"+System.currentTimeMillis());
                         GiraffeCompressor.init(getActivity());
 
                         GiraffeCompressor.create() //two implementations: mediacodec and ffmpeg,default is mediacodec
@@ -297,10 +300,11 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                 startActivity(Intent.createChooser(share, "Share Video!"));
             }
 
-        @Override
-        public void onSuccess()
-            {
+        int _progress;
 
+        @Override
+        public void onSuccess(final int fileChunckUploaded)
+            {
 
                 getActivity().runOnUiThread(new Runnable()
                     {
@@ -308,25 +312,17 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                         public void run()
                             {
                                 progressBar.setVisibility(View.GONE);
-                                Toast.makeText(getActivity(), "Success", Toast.LENGTH_SHORT).show();
+//                                Toast.makeText(getActivity(), "Success", Toast.LENGTH_SHORT).show();
+
                             }
                     });
 
+                _progress = fileChunckUploaded;
             }
 
         @Override
         public void onFailure()
             {
-                getActivity().runOnUiThread(new Runnable()
-                    {
-                        @Override
-                        public void run()
-                            {
-                                progressBar.setVisibility(View.GONE);
-
-                                Toast.makeText(getActivity(), "Failed", Toast.LENGTH_SHORT).show();
-                            }
-                    });
 
             }
 
@@ -447,20 +443,21 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                         if (files == null)
                             files = new ArrayList<String>();
                         files.add(imageFileToShare.getName());
-                        FileUploadPool.fileChunks = fileChunks;
+                        FileUploadService.fileChunks = fileChunks;
                     }
 
                 if (files != null && files.size() > 0)
                     {
                         //4. call the service to send chunks to server
                         {
-                            mFileUploadService = new FileUploadService(getActivity(), this);
+
+                            uploadResultReceiver = new UploadResultReceiver(new Handler(), getActivity());
+
+                            mFileUploadService = new FileUploadService(getActivity(), this, uploadResultReceiver);
 
                             mServiceIntent = new Intent(getActivity(), mFileUploadService.getClass());
 
                             mServiceIntent.putExtra("FileName", imageFileToShare.getName());
-
-                            //mFileUploadService.startService(mServiceIntent);
 
                             if (isMyServiceRunning(mFileUploadService.getClass()))
                                 getActivity().stopService(mServiceIntent);
@@ -505,7 +502,7 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                                         j++;
                                     }
                                 for (Map<Object, Object> chunk : chunks)
-                                    chunk.put("ChunkName", fileName + ".part_" + chunk.get("ChunkID").toString() + "." + String.valueOf(chunks.size()));
+                                    chunk.put("ChunkName", fileName + ".part_" + chunk.get("ChunkID").toString() + "." + String.valueOf(chunks.size())+".mp4");
 
                             } catch (Exception e)
                             {
@@ -515,7 +512,7 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                 return chunks;
             }
 
-        private boolean isMyServiceRunning(Class<?> serviceClass)
+        public boolean isMyServiceRunning(Class<?> serviceClass)
             {
                 ActivityManager manager = (ActivityManager) getActivity().getSystemService(getActivity().ACTIVITY_SERVICE);
                 for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE))
@@ -527,4 +524,5 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                     }
                 return false;
             }
+
     }

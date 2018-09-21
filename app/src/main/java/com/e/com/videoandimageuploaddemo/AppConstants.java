@@ -137,7 +137,7 @@ public class AppConstants
 
         public static String SendForApproval = "true";
 
-        public static int VideoFileChunkSize = 1500000;
+        public static int VideoFileChunkSize = 150000;
 
         //static LocationService objLocationService = null;
         public static Context context = null;

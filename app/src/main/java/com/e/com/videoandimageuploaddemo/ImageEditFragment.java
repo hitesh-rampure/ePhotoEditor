@@ -237,7 +237,7 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                                     Uri uri = Uri.parse(url);
                                     File file = new File(uri.getPath());
 
-                                    if(uri.getPath().contains(".jpeg") || uri.getPath().contains(".png") || uri.getPath().contains(".PNG") || uri.getPath().contains(".JPEG") || uri.getPath().contains(".jpg") || uri.getPath().contains(".JPG"))
+                                    if (uri.getPath().contains(".jpeg") || uri.getPath().contains(".png") || uri.getPath().contains(".PNG") || uri.getPath().contains(".JPEG") || uri.getPath().contains(".jpg") || uri.getPath().contains(".JPG"))
                                         {
                                             return;
                                         }
@@ -401,14 +401,14 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
                         if (files == null)
                             files = new ArrayList<String>();
                         files.add(imageFileToShare.getName());
-                        FileUploadPool.fileChunks = fileChunks;
+                        FileUploadService.fileChunks = fileChunks;
                     }
 
                 if (files != null && files.size() > 0)
                     {
                         //4. call the service to send chunks to server
                         {
-                            mFileUploadService = new FileUploadService(getActivity(), this);
+                            mFileUploadService = new FileUploadService(getActivity(), this,null);
 
                             mServiceIntent = new Intent(getActivity(), mFileUploadService.getClass());
 
@@ -427,8 +427,21 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
             {
                 ArrayList<Map<Object, Object>> chunks = null;
 
-                Uri uri = Uri.parse(filePath);
-                File file = new File(uri.getPath());
+                File file = new File(filePath);
+
+                if (!file.exists())
+                    {
+                        Uri uri = Uri.parse(filePath);
+                        if (uri.getPath() == null)
+                            {
+                                file = new File(uri.toString());
+                            }
+                        else
+                            {
+
+                                file = new File(uri.getPath());
+                            }
+                    }
 
                 if (file.exists())
                     {
@@ -488,7 +501,7 @@ public class ImageEditFragment extends DialogFragment implements OnTouchListener
 
 
         @Override
-        public void onSuccess()
+        public void onSuccess(int fileChunckUploaded)
             {
                 getActivity().runOnUiThread(new Runnable()
                     {
