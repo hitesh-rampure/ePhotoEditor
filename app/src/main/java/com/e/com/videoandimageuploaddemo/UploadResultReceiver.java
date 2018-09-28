@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.ResultReceiver;
+import android.util.Log;
 
 public class UploadResultReceiver extends ResultReceiver
     {
@@ -33,7 +34,8 @@ public class UploadResultReceiver extends ResultReceiver
                     {
                         int progress = resultData.getInt("progress");
                         showNotificationProgress(progress);
-                        if (progress == FileUploadService.fileChunks.size())
+                        Log.e("Progress","--------"+progress);
+                        if (progress == FileUploadService.fileChunks.size()-1)
                             {
                                 cancelAllNotification();
                             }
@@ -51,6 +53,7 @@ public class UploadResultReceiver extends ResultReceiver
                         .setContentIntent(pendingIntent)
                         .setProgress(FileUploadService.fileChunks.size()
                                 , progress, false)
+                        .setAutoCancel(true)
                         .setSmallIcon(R.drawable.ic_launcher_background)
                         .build();
 

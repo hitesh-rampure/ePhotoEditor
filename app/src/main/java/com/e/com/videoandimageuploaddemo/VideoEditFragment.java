@@ -133,6 +133,8 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
 
                 final File inputFile = new File(uri);
 
+
+
                 try
                     {
                         final File outputFile = new File("/sdcard/temp_"+System.currentTimeMillis());
@@ -142,7 +144,7 @@ public class VideoEditFragment extends DialogFragment implements OnClickListener
                                 .input(inputFile) //set video to be compressed
                                 .output(outputFile) //set compressed video output
                                 .bitRate(BIT_RATE)//set bitrate 码率
-                                .resizeFactor(SCALE_FACTOR)//set video resize factor 分辨率缩放,默认保持原分辨率
+                                .resizeFactor(SCALE_FACTOR)//set video resize factor
                                 // .watermark("/sdcard/videoCompressor/watermarker.png")//add watermark(take a long time) 水印图片(需要长时间处理)
                                 .ready()
                                 .observeOn(AndroidSchedulers.mainThread())

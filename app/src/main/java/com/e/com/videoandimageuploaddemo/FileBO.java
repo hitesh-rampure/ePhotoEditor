@@ -223,17 +223,17 @@ public class FileBO
                                         "</Files>" +
                                         "</SaveChunkFiles>",
                                 chunk.get("ChunkName").toString(),
-                                "550",
+                                "850",
                                 "2018-07-31T09:54:39",
-                                "LEGEN FRON",// SessionHelper.LoggedInEmployee.EmployeeData.get("EmployeeName").toString(),
-                                "008", //  SessionHelper.getCredentials().getEmployeeNo(),
+                                "Akshada Kamtekar1",// SessionHelper.LoggedInEmployee.EmployeeData.get("EmployeeName").toString(),
+                                "E00407", //  SessionHelper.getCredentials().getEmployeeNo(),
                                 "0",
                                 fileName,
                                 "videos",
-                                "XYZ100433",
-                                "10",
+                                "XYZ100214",
+                                "100",
                                 "akshay",
-                                "MD0023342",
+                                "MD0006433",
                                 chunk.get("ChunkData").toString(),
                                 ""
                         );
